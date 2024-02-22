@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css"
+    />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+    <title>Leaflet - Fuel Consumption Calculator</title>
+  </head>
+  <body class="p-0 m-0">
+    <div class="main-body">
+      <div
+        class="header p-4 shadow shadow-lg shadow-900-gray flex items-center justify-between"
+      >
+        <div class="logo flex items-center gap-4">
+          <img
+            class="w-[50px] h-[50px] rounded-full ml-2 border border-black"
+            src="logo.jpeg"
+          />
+          <h1 class="text-2xl font-bold p-3">Fuel Consumption Calculator</h1>
+        </div>
+        <div class="theme-options flex gap-2 items-center text-2xl pr-7">
+          <h1>Mode</h1>
+          <i id="toggleIcon" class="fa-solid fa-toggle-off cursor-pointer"></i>
+        </div>
+      </div>
+
+      <div class="main flex">
+        <div class="user-input-section w-[20%]">
+          <div class="input-fields w-[100%] p-2">
+            <label class="text-md font-bold p-2">Starting Point</label>
+
+            <div class="starting-point-input p-3 flex items-center gap-2">
+              <input
+                id="starting-point"
+                class="bg-gray-200 w-full p-3 rounded-xl"
+                type="text"
+                onclick="startingPointFunction()"
+                placeholder="Enter Starting Point"
+              />
+
+              <button id="locate-me-button">
+                <i
+                  class="fa-solid fa-location-crosshairs locate-me-button bg-gray-100 border border-gray-400 p-3 rounded-lg hover:bg-gray-300 hover:text-gray-800"
+                ></i>
+              </button>
+            </div>
+
+            <label class="text-md font-bold p-2">Ending Point</label>
+
+            <div class="starting-point-input p-3">
+              <input
+                onclick="endingPointFunction()"
+                id="ending-point"
+                class="bg-gray-200 w-full p-3 rounded-xl"
+                type="text"
+                placeholder="Enter Ending Point"
+              />
+            </div>
+
+            <label class="text-md font-bold p-2">Car Model</label>
+            <div class="starting-point-input p-3">
+              <div class="car-model-input">
+                <select
+                  class="bg-gray-200 w-full p-4 rounded-xl appearance-none"
+                  id="car-model"
+                  name="cars"
+                >
+                  <option value=""></option>
+                  <option value="corolla">Toyota Corolla</option>
+                  <option value="alto">Suzuki Alto</option>
+                  <option value="mehran">Suzuki Mehran</option>
+                  <option value="vitz">Suzuki Vitz</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="car-image mx-auto w-[220px]">
+              <img
+                id="carImage"
+                class="w-[100%] h-[170px] rounded-xl"
+                src="logo.jpeg"
+              />
+            </div>
+
+            <div class="buttons w-[70%] mx-auto">
+              <div class="submit-button my-3">
+                <button
+                  class="button-calculate bg-blue-500 px-7 py-2 w-full rounded-md font-bold text-white hover:bg-blue-600 hover:shadow hover:shadow-lg hover:shadow-gray-800 duration-300"
+                >
+                  Calculate
+                </button>
+              </div>
+
+              <div class="advanced-filter-button">
+                <button
+                  class="button-advanced bg-gray-300 px-7 py-2 w-full rounded-md hover:bg-gray-400 hover:shadow hover:shadow-lg hover:shadow-gray-800 duration-300"
+                >
+                  Advanced Settings
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-section w-[80%]">
+          <div class="map-window rounded-3xl p-6 w-[1200px] h-[650px]">
+            <div class="w-[100%] h-[100%] rounded-3xl" id="map"></div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="popup-div"
+        class="results-output absolute left-[400px] w-[700px] h-[500px] border border-gray-700 bg-white top-[-990px]"
+      >
+        <div onclick="closePopUp()" class="close-button flex justify-end p-2">
+          <i
+            class="fa-solid fa-xmark text-xl cursor-pointer hover:text-blue-600"
+          ></i>
+        </div>
+        <div class="car-details flex justify-between items-center px-5">
+          <div class="car-photo w-[100px] h-[100px]">
+            <img class="carPhotoPopUpName" src="corolla.jpg" />
+          </div>
+          <div>
+            <strong>Car Model:</strong>
+            <label class="carModelPopUpName"></label>
+          </div>
+
+          <div class="flex">
+            <strong>Mileage:</strong>
+            <div class="carMileagePopUpName"></div>
+            km/l
+          </div>
+          <div>
+            <strong>Fuel Price:</strong>
+
+            <div class="fuelPricePkrPopUpName"></div>
+            PKR per Litres
+          </div>
+        </div>
+        <div class="statistics text-sm flex item-center justify-center m-9">
+          <ul class="flex gap-[50px]">
+            <div class="section-1">
+              <li>
+                <strong> Consumption Per Day:</strong>
+
+                <label class="popup-consumption-d"></label> Litre(s)
+              </li>
+              <li>
+                <strong> Consumption Per Week:</strong>
+
+                <label class="popup-consumption-w"></label>Litre(s)
+              </li>
+              <li>
+                <strong> Consumption Per Month:</strong>
+
+                <label class="popup-consumption-m"></label>Litre(s)
+              </li>
+              <li>
+                <strong> Consumption Per Year:</strong>
+
+                <label class="popup-consumption-y"></label>Litre(s)
+              </li>
+              <li>
+                <strong>Cost Per Day: </strong
+                ><label class="popup-cost-d"></label> PKR
+              </li>
+              <li>
+                <strong>Cost Per Week:</strong>
+                <label class="popup-cost-w"></label> PKR
+              </li>
+              <li>
+                <strong>Cost Per Month:</strong>
+                <label class="popup-cost-m"></label> PKR
+              </li>
+              <li>
+                <strong>Cost Per Year:</strong>
+                <label class="popup-cost-y"></label> PKR
+              </li>
+            </div>
+            <div class="section-2">
+              <li>
+                <strong>Distance Per Day:</strong>
+
+                <label class="popup-distance-d"></label> Kilometers
+              </li>
+              <li>
+                <strong> Distance Per Week:</strong>
+
+                <label class="popup-distance-w"></label> Kilometers
+              </li>
+              <li>
+                <strong>Distance Per Month:</strong>
+
+                <label class="popup-distance-m"></label> Kilometers
+              </li>
+              <li>
+                <strong> Distance Per Year:</strong>
+
+                <label class="popup-distance-y"></label> Kilometers
+              </li>
+              <li>
+                <strong>Total Time On The Road Per Day:</strong>
+
+                <label class="popup-time-d"></label> Minutes
+              </li>
+              <li>
+                <strong> Total Time On The Road Per Week:</strong>
+
+                <label class="popup-time-w"></label> Minutes
+              </li>
+              <li>
+                <strong>Total Time On The Road Per Month:</strong>
+
+                <label class="popup-time-m"></label> Minutes
+              </li>
+              <li>
+                <strong> Total Time On The Road Per Year:</strong>
+
+                <label class="popup-time-y"></label> Minutes
+              </li>
+            </div>
+          </ul>
+        </div>
+        <div class="flex item-center justify-center">
+          <button
+            onclick="downloadTxtFile()"
+            class="download-button bg-blue-600 text-white w-[100px] text-center p-2 rounded-md mb-[20px] hover:bg-blue-500"
+          >
+            Download
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script src="index.js"></script>
+  </body>
+</html>
